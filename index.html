@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarih Bulmacası</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #e67e22;
+            --danger-color: #e74c3c;
+            --bg-color: #ecf0f1;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 600px;
+        }
+
+        h1 { margin-top: 0; color: var(--primary-color); }
+        h2 { margin: 10px 0; color: var(--secondary-color); }
+
+        .hidden { display: none !important; }
+
+        /* Ortak Buton ve Select Stilleri */
+        select {
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #bdc3c7;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        
+        button:hover { transform: translateY(-2px); opacity: 0.9; }
+        
+        .btn-start { background-color: var(--accent-color); margin-top: 15px; padding: 15px;}
+        .btn-submit { background-color: var(--success-color); margin-top: 15px; }
+        .btn-pass { background-color: var(--warning-color); margin-top: 10px;}
+        .btn-end { background-color: var(--danger-color); margin-top: 10px;}
+
+        /* Soru Hazırlık Ekranı */
+        .prep-box {
+            background-color: #f8f9fa;
+            border: 2px dashed #bdc3c7;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .prep-title {
+            font-size: 22px;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        /* Oyun Ekranı */
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            color: var(--primary-color);
+        }
+
+        .clue-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .clue-box {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 10px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+            outline: none;
+        }
+
+        .feedback {
+            height: 24px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .correct-text { color: var(--success-color); }
+        .wrong-text { color: var(--danger-color); }
+        .info-text { color: var(--accent-color); }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- KARŞILAMA EKRANI -->
+        <div id="welcome-screen">
+            <h1>Tarih Bulmacası</h1>
+            <p>4 ipucunu oku, tarihi olayı veya kişiyi bul!</p>
+            <p style="color: #7f8c8d; font-size: 14px;">Sorular sırasıyla gelecek. Her soru öncesi süreyi ayarlayabilirsiniz.</p>
+            <button class="btn-start" onclick="initGame()">Oyunu Başlat</button>
+        </div>
+
+        <!-- SORU HAZIRLIK EKRANI (Hoca İçin) -->
+        <div id="prep-screen" class="hidden">
+            <div class="prep-box">
+                <div class="prep-title"><span id="prep-question-number">1</span>. Soru İçin Hazırlık</div>
+                <label for="time-select" style="display:block; text-align:left; margin-bottom: 5px; font-weight:bold;">Bu Soru İçin Süre Belirleyin:</label>
+                <select id="time-select">
+                    <option value="30">30 Saniye</option>
+                    <option value="60" selected>60 Saniye</option>
+                    <option value="90">90 Saniye</option>
+                    <option value="120">120 Saniye</option>
+                </select>
+            </div>
+            <button class="btn-start" onclick="startQuestion()">Soruyu Başlat</button>
+            <div style="margin-top: 15px; font-weight: bold; color: var(--secondary-color);">Mevcut Puan: <span id="prep-score">0</span></div>
+        </div>
+
+        <!-- OYUN EKRANI -->
+        <div id="game-screen" class="hidden">
+            <div class="header-info">
+                <span>Puan: <span id="score-display">0</span></span>
+                <span>Soru: <span id="question-count">1</span>/<span id="total-questions">0</span></span>
+                <span style="color: var(--danger-color);">⏱️ <span id="time-display">60</span> sn</span>
+            </div>
+            
+            <div class="clue-grid" id="clue-container">
+                <!-- İpuçları buraya gelecek -->
+            </div>
+
+            <input type="text" id="answer-input" placeholder="Cevabınızı buraya yazın..." autocomplete="off">
+            <button class="btn-submit" onclick="checkAnswer()">Cevapla (Enter)</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-pass" onclick="usePass()">Pas Geç (<span id="pass-count">1</span>)</button>
+                <button class="btn-end" onclick="oyunuBitir()">Oyunu Bitir</button>
+            </div>
+            
+            <div id="feedback-message" class="feedback"></div>
+        </div>
+
+        <!-- OYUN SONU EKRANI -->
+        <div id="end-screen" class="hidden">
+            <h2>Oyun Bitti!</h2>
+            <p style="font-size: 24px;">Toplam Puanın: <b id="final-score" style="color: var(--accent-color)">0</b></p>
+            <p>Görülen Soru Sayısı: <span id="final-questions">0</span></p>
+            <button class="btn-start" onclick="resetToWelcome()">Ana Menüye Dön</button>
+        </div>
+    </div>
+
+    <script>
+        /* =======================================================
+           SORU HAVUZU (Sorular buradaki sıraya göre çıkacaktır)
+           ======================================================= */
+        const soruHavuzu = [
+            {
+                ipuclari: ["1453 Yılı", "Bizans İmparatorluğu", "Şahi Topu", "Fatih Sultan Mehmet"],
+                cevap: "İstanbulun Fethi"
+            },
+            {
+                ipuclari: ["1915 Yılı", "Seyit Onbaşı", "Dur Yolcu", "Boğazın Geçilememesi"],
+                cevap: "Çanakkale Savaşı"
+            },
+            {
+                ipuclari: ["29 Ekim 1923", "Egemenlik", "Ankara", "Mustafa Kemal Atatürk"],
+                cevap: "Cumhuriyetin İlanı"
+            },
+            {
+                ipuclari: ["1071 Yılı", "Alparslan", "Romen Diyojen", "Anadolu'nun Kapıları"],
+                cevap: "Malazgirt Savaşı"
+            },
+            {
+                ipuclari: ["İlk Yazılı Antlaşma", "Mısırlılar", "Hititler", "M.Ö. 1280"],
+                cevap: "Kadeş Antlaşması"
+            },
+            {
+                ipuclari: ["23 Nisan 1920", "Milli Egemenlik", "Ankara", "İlk Meclis"],
+                cevap: "TBMM'nin Açılışı"
+            },
+            {
+                ipuclari: ["1789 Yılı", "Bastille Hapishanesi", "Milliyetçilik Akımı", "Özgürlük ve Eşitlik"],
+                cevap: "Fransız İhtilali"
+            },
+            {
+                ipuclari: ["375 Yılı", "Hunlar", "Balamir Kağan", "Roma'nın İkiye Ayrılması"],
+                cevap: "Kavimler Göçü"
+            },
+            {
+                ipuclari: ["1922 Yılı", "İsmet Paşa", "Sıcak Çatışmanın Sonu", "Doğu Trakya'nın Kurtuluşu"],
+                cevap: "Mudanya Ateşkes Antlaşması"
+            },
+            {
+                ipuclari: ["İngiltere", "Buhar Gücü", "Fabrikalaşma", "Hammadde Arayışı"],
+                cevap: "Sanayi İnkılabı"
+            },
+            {
+                ipuclari: ["24 Temmuz 1923", "İsviçre", "Kapitülasyonların İptali", "Bağımsızlığın Tanınması"],
+                cevap: "Lozan Barış Antlaşması"
+            },
+            {
+                ipuclari: ["1402 Yılı", "Yıldırım Bayezid", "Timur", "Fetret Devri"],
+                cevap: "Ankara Savaşı"
+            },
+            {
+                ipuclari: ["1215 Yılı", "İngiltere", "Yurtsuz John", "Kralın Yetkilerinin Kısıtlanması"],
+                cevap: "Magna Carta"
+            },
+            {
+                ipuclari: ["1914 - 1918", "Saraybosna Suikasti", "İtilaf ve İttifak", "İmparatorlukların Çöküşü"],
+                cevap: "Birinci Dünya Savaşı"
+            },
+            {
+                ipuclari: ["22 Haziran 1919", "Kurtuluşun Gerekçesi", "Kurtuluşun Yöntemi", "Kurtuluşun Amacı"],
+                cevap: "Amasya Genelgesi"
+            },
+            {
+                ipuclari: ["Pasarofça Antlaşması", "İlk Matbaa", "Çiçek Aşısı", "Patrona Halil İsyanı"],
+                cevap: "Lale Devri"
+            },
+            {
+                ipuclari: ["4-11 Eylül 1919", "Milli Cemiyetlerin Birleşmesi", "İrade-i Milliye", "Manda ve Himayenin Reddi"],
+                cevap: "Sivas Kongresi"
+            },
+            {
+                ipuclari: ["Bumin Kağan", "Ötüken", "Orhun Yazıtları", "Türk Adıyla Kurulan İlk Devlet"],
+                cevap: "Göktürk Devleti"
+            },
+            {
+                ipuclari: ["1096 - 1270", "Kudüs'ü Almak", "Papanın Çağrısı", "Doğunun Zenginlikleri"],
+                cevap: "Haçlı Seferleri"
+            },
+            {
+                ipuclari: ["1839 Yılı", "Gülhane Parkı", "Mustafa Reşit Paşa", "Kanun Üstünlüğü"],
+                cevap: "Tanzimat Fermanı"
+            }
+        ];
+
+        /* Oyun Değişkenleri */
+        let mevcutSoruIndex = 0;
+        let puan = 0;
+        let soruSuresi = 0;
+        let kalanSure = 0;
+        let zamanlayici;
+        let pasHakki = 1;
+
+        /* Ekran Elementleri */
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const prepScreen = document.getElementById('prep-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        
+        const timeSelect = document.getElementById('time-select');
+        const timeDisplay = document.getElementById('time-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const prepScoreDisplay = document.getElementById('prep-score');
+        const questionCountDisplay = document.getElementById('question-count');
+        const totalQuestionsDisplay = document.getElementById('total-questions');
+        const prepQuestionNumberDisplay = document.getElementById('prep-question-number');
+        const clueContainer = document.getElementById('clue-container');
+        const answerInput = document.getElementById('answer-input');
+        const passCountDisplay = document.getElementById('pass-count');
+        const feedbackMessage = document.getElementById('feedback-message');
+
+        // Enter tuşu ile cevap verebilme
+        answerInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                checkAnswer();
+            }
+        });
+
+        function resetToWelcome() {
+            endScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+        }
+
+        function initGame() {
+            // Değerleri sıfırla
+            puan = 0;
+            pasHakki = 1;
+            mevcutSoruIndex = 0;
+            totalQuestionsDisplay.innerText = soruHavuzu.length;
+            
+            welcomeScreen.classList.add('hidden');
+            showPrepScreen();
+        }
+
+        function showPrepScreen() {
+            if (mevcutSoruIndex >= soruHavuzu.length) {
+                oyunuBitir();
+                return;
+            }
+            
+            // Oyun ekranını gizle, hazırlık ekranını aç
+            gameScreen.classList.add('hidden');
+            prepScreen.classList.remove('hidden');
+            
+            // Hazırlık ekranı bilgilerini güncelle
+            prepQuestionNumberDisplay.innerText = mevcutSoruIndex + 1;
+            prepScoreDisplay.innerText = puan;
+            
+            // Input'u temizle ve geri bildirim mesajlarını sil
+            answerInput.value = "";
+            feedbackMessage.innerText = "";
+            answerInput.disabled = false;
+        }
+
+        function startQuestion() {
+            // Hazırlık ekranındaki süreyi al
+            soruSuresi = parseInt(timeSelect.value);
+            
+            // Ekranları değiştir
+            prepScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+
+            // Oyun ekranı bilgilerini güncelle
+            scoreDisplay.innerText = puan;
+            passCountDisplay.innerText = pasHakki;
+            questionCountDisplay.innerText = mevcutSoruIndex + 1;
+            
+            const aktifSoru = soruHavuzu[mevcutSoruIndex];
+            clueContainer.innerHTML = '';
+            aktifSoru.ipuclari.forEach(ipucu => {
+                let div = document.createElement('div');
+                div.className = 'clue-box';
+                div.innerText = ipucu;
+                clueContainer.appendChild(div);
+            });
+
+            setTimeout(() => answerInput.focus(), 100);
+            zamanlayiciBaslat();
+        }
+
+        function zamanlayiciBaslat() {
+            clearInterval(zamanlayici);
+            kalanSure = soruSuresi;
+            timeDisplay.innerText = kalanSure;
+
+            zamanlayici = setInterval(() => {
+                kalanSure--;
+                timeDisplay.innerText = kalanSure;
+                
+                if (kalanSure <= 0) {
+                    clearInterval(zamanlayici);
+                    sureDoldu();
+                }
+            }, 1000);
+        }
+
+        function checkAnswer() {
+            if (answerInput.disabled) return;
+
+            const kullaniciCevabi = answerInput.value.trim().toLocaleLowerCase('tr-TR');
+            const dogruCevap = soruHavuzu[mevcutSoruIndex].cevap.trim().toLocaleLowerCase('tr-TR');
+
+            if (kullaniciCevabi === "") return;
+
+            if (kullaniciCevabi === dogruCevap) {
+                puan += 10;
+                scoreDisplay.innerText = puan;
+                showFeedback("Doğru Cevap! +10 Puan", "correct-text");
+                siradakiSoruyaGec(1500);
+            } else {
+                showFeedback("Yanlış! Tekrar dene.", "wrong-text");
+                answerInput.value = "";
+                answerInput.focus();
+            }
+        }
+
+        function sureDoldu() {
+            answerInput.disabled = true;
+            const dogruCevap = soruHavuzu[mevcutSoruIndex].cevap;
+            showFeedback(`Süre Doldu! Cevap: ${dogruCevap}`, "wrong-text");
+            siradakiSoruyaGec(2500); 
+        }
+
+        function usePass() {
+            if (answerInput.disabled) return;
+
+            if (pasHakki > 0) {
+                pasHakki--;
+                passCountDisplay.innerText = pasHakki;
+                const dogruCevap = soruHavuzu[mevcutSoruIndex].cevap;
+                showFeedback(`Pas geçildi. Cevap: ${dogruCevap}`, "info-text");
+                siradakiSoruyaGec(2000);
+            } else {
+                showFeedback("Pas hakkınız kalmadı!", "wrong-text");
+                answerInput.focus();
+            }
+        }
+
+        function siradakiSoruyaGec(beklemeSuresi) {
+            clearInterval(zamanlayici);
+            answerInput.disabled = true; // Bekleme anında yeni giriş engelleniyor
+            mevcutSoruIndex++;
+            
+            // Her 10 soruda bir +1 pas hakkı ver
+            if (mevcutSoruIndex % 10 === 0 && mevcutSoruIndex > 0) {
+                pasHakki++;
+            }
+
+            setTimeout(() => {
+                showPrepScreen(); // Diğer soruya geçmeden önce tekrar hazırlık ekranı gelir
+            }, beklemeSuresi);
+        }
+
+        function showFeedback(mesaj, sinifAdi) {
+            feedbackMessage.innerText = mesaj;
+            feedbackMessage.className = 'feedback ' + sinifAdi;
+            setTimeout(() => {
+                if(feedbackMessage.innerText === mesaj) {
+                    feedbackMessage.innerText = "";
+                }
+            }, 3000);
+        }
+
+        function oyunuBitir() {
+            clearInterval(zamanlayici);
+            prepScreen.classList.add('hidden');
+            gameScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+            
+            document.getElementById('final-score').innerText = puan;
+            document.getElementById('final-questions').innerText = mevcutSoruIndex;
+        }
+    </script>
+</body>
+</html>
